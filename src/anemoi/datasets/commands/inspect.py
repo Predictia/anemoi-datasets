@@ -319,7 +319,7 @@ class Version:
         if self.statistics_ready:
             stats = self.statistics
         else:
-            stats = [["-"] * len(self.variables)] * 5
+            stats = [["-"] * len(self.variables)] * 7
 
         table = Table(title="Statistics")
         table.add_column("Index", justify="right")
@@ -328,6 +328,8 @@ class Version:
         table.add_column("Max", justify="right")
         table.add_column("Mean", justify="right")
         table.add_column("Stdev", justify="right")
+        table.add_column("StdevTend", justify="right")
+        table.add_column("Ratio", justify="right")
         table.add_column("Units", justify="left")
 
         def _(x):
@@ -390,14 +392,25 @@ class Version:
             print(f"📁 Files      : {n:,}")
 
     @property
-    def statistics(self) -> tuple[list, list, list, list]:
+    def statistics(self) -> tuple[list, list, list, list, list, list]:
         """Get the statistics of the dataset."""
         try:
             if self.dataset is not None:
                 stats = self.dataset.statistics
-                return stats["minimum"], stats["maximum"], stats["mean"], stats["stdev"]
+
+                try: tends = self.dataset.statistics_tendencies()
+                except: tends = {"stdev": np.zeros(stats["stdev"].shape)}
+
+                return (
+                    stats["minimum"],
+                    stats["maximum"],
+                    stats["mean"],
+                    stats["stdev"],
+                    tends["stdev"],
+                    stats["stdev"] / tends["stdev"],
+                )
         except AttributeError:
-            return [["-"] * len(self.variables)] * 4
+            return [["-"] * len(self.variables)] * 6
 
     @property
     def statistics_ready(self) -> bool:
