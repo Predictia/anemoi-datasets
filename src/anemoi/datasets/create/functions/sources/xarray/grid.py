@@ -89,6 +89,7 @@ class MeshedGrid(LatLonGrid):
         lat, lon = np.meshgrid(
             self.lat.variable.values,
             self.lon.variable.values,
+            indexing="ij",
         )
 
         return lat.flatten(), lon.flatten()
