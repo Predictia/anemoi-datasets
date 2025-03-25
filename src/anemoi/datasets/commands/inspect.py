@@ -269,7 +269,7 @@ class Version:
         if self.statistics_ready:
             stats = self.statistics
         else:
-            stats = [["-"] * len(self.variables)] * 4
+            stats = [["-"] * len(self.variables)] * 6
 
         for i, v in enumerate(self.variables):
             rows.append([i, v] + [x[i] for x in stats])
@@ -277,8 +277,8 @@ class Version:
         print(
             table(
                 rows,
-                header=["Index", "Variable", "Min", "Max", "Mean", "Stdev"],
-                align=[">", "<", ">", ">", ">", ">"],
+                header=["Index", "Variable", "Min", "Max", "Mean", "Stdev", "StdevTend", "Ratio"],
+                align=[">", "<", ">", ">", ">", ">", ">", ">"],
                 margin=3,
             )
         )
@@ -335,9 +335,20 @@ class Version:
         try:
             if self.dataset is not None:
                 stats = self.dataset.statistics
-                return stats["minimum"], stats["maximum"], stats["mean"], stats["stdev"]
+
+                try: tends = self.dataset.statistics_tendencies()
+                except: tends = {"stdev": np.zeros(stats["stdev"].shape)}
+
+                return (
+                    stats["minimum"],
+                    stats["maximum"],
+                    stats["mean"],
+                    stats["stdev"],
+                    tends["stdev"],
+                    stats["stdev"] / tends["stdev"],
+                )
         except AttributeError:
-            return [["-"] * len(self.variables)] * 4
+            return [["-"] * len(self.variables)] * 6
 
     @property
     def statistics_ready(self) -> bool:

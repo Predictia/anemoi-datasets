@@ -1195,7 +1195,7 @@ class _InitAdditions(Actor, HasRegistryMixin, AdditionsMixin):
             The progress indicator.
         """
         super().__init__(path)
-        self.delta = frequency_to_timedelta(delta)
+        self.delta = frequency_to_timedelta(delta or self.dataset.anemoi_dataset.frequency)
         self.use_threads = use_threads
         self.progress = progress
 
@@ -1245,7 +1245,7 @@ class _RunAdditions(Actor, HasRegistryMixin, AdditionsMixin):
             The progress indicator.
         """
         super().__init__(path)
-        self.delta = frequency_to_timedelta(delta)
+        self.delta = frequency_to_timedelta(delta or self.dataset.anemoi_dataset.frequency)
         self.use_threads = use_threads
         self.progress = progress
         self.parts = parts
@@ -1311,7 +1311,7 @@ class _FinaliseAdditions(Actor, HasRegistryMixin, AdditionsMixin):
             The progress indicator.
         """
         super().__init__(path)
-        self.delta = frequency_to_timedelta(delta)
+        self.delta = frequency_to_timedelta(delta or self.dataset.anemoi_dataset.frequency)
         self.use_threads = use_threads
         self.progress = progress
 
@@ -1454,7 +1454,7 @@ def multi_addition(cls: type) -> type:
         def __init__(self, *args, **kwargs: Any):
             self.actors = []
 
-            for k in kwargs.pop("delta", []):
+            for k in kwargs.pop("delta", [""]):
                 self.actors.append(cls(*args, delta=k, **kwargs))
 
             if not self.actors:
