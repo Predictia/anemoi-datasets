@@ -412,7 +412,7 @@ class Version:
             return
 
         if self.build_flags is None:
-            print("🪫 Dataset not initialized")
+            print("🪫 Dataset not initialised")
             return
 
         build_flags = self.build_flags
@@ -437,7 +437,7 @@ class Version:
             )
             start = self.initialised
             if self.initialised:
-                print(f"🕰️  Dataset initialized {when(start)}.")
+                print(f"🕰️  Dataset initialised {when(start)}.")
                 if built and latest:
                     speed = (latest - start) / built
                     eta = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) + speed * (total - built)
