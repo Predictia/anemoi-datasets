@@ -12,8 +12,6 @@ import logging
 import os
 from copy import deepcopy
 from typing import Any
-from typing import Optional
-from typing import Union
 
 import yaml
 from anemoi.utils.config import DotDict
@@ -25,7 +23,7 @@ from anemoi.datasets.dates.groups import Groups
 LOG = logging.getLogger(__name__)
 
 
-def _get_first_key_if_dict(x: Union[str, dict]) -> str:
+def _get_first_key_if_dict(x: str | dict) -> str:
     """Returns the first key if the input is a dictionary, otherwise returns the input string.
 
     Parameters
@@ -97,7 +95,7 @@ def check_dict_value_and_set(dic: dict, key: str, value: Any) -> None:
     dic[key] = value
 
 
-def resolve_includes(config: Union[dict, list]) -> Union[dict, list]:
+def resolve_includes(config: dict | list) -> dict | list:
     """Resolves '<<' includes in a configuration dictionary or list.
 
     Parameters
@@ -123,7 +121,7 @@ def resolve_includes(config: Union[dict, list]) -> Union[dict, list]:
 class Config(DotDict):
     """Configuration class that extends DotDict to handle configuration loading and processing."""
 
-    def __init__(self, config: Optional[Union[str, dict]] = None, **kwargs):
+    def __init__(self, config: str | dict | None = None, **kwargs):
         """Initializes the Config object.
 
         Parameters
@@ -134,7 +132,6 @@ class Config(DotDict):
             Additional keyword arguments to update the configuration.
         """
         if isinstance(config, str):
-            self.config_path = os.path.realpath(config)
             config = load_any_dict_format(config)
         else:
             config = deepcopy(config if config is not None else {})
@@ -282,6 +279,8 @@ class LoadersConfig(Config):
 
         self.output.order_by = normalize_order_by(self.output.order_by)
 
+        self.setdefault("dates", Config())
+
         self.dates["group_by"] = self.build.group_by
 
         ###########
@@ -362,17 +361,19 @@ def set_to_test_mode(cfg: dict) -> None:
         group_by=NUMBER_OF_DATES,
     )
 
+    num_ensembles = count_ensembles(cfg)
+
     def set_element_to_test(obj):
         if isinstance(obj, (list, tuple)):
             for v in obj:
                 set_element_to_test(v)
             return
         if isinstance(obj, (dict, DotDict)):
-            if "grid" in obj:
+            if "grid" in obj and num_ensembles > 1:
                 previous = obj["grid"]
                 obj["grid"] = "20./20."
                 LOG.warning(f"Running in test mode. Setting grid to {obj['grid']} instead of {previous}")
-            if "number" in obj:
+            if "number" in obj and num_ensembles > 1:
                 if isinstance(obj["number"], (list, tuple)):
                     previous = obj["number"]
                     obj["number"] = previous[0:3]
@@ -444,3 +445,49 @@ def build_output(*args, **kwargs) -> OutputSpecs:
         The output specifications object.
     """
     return OutputSpecs(*args, **kwargs)
+
+
+def flatten_list_of_sets(list_of_sets: list[set]) -> set:
+    return {element for subset in list_of_sets for element in subset}
+
+
+def mars_str_to_set(s: str) -> set[str]:
+    """Mars strings are like 1/to/2 or 1/to/2/by/1
+
+    Returns a set of strings, e.g. {'1', '2'}
+    """
+    assert "/" in s, "mars_str_to_set expects a string with '/'"
+    lst = s.split("/")
+    assert len(lst) in (3, 5), f"mars_str_to_set expects a string like 1/to/2 or 1/to/4/by/1, got {s}"
+    if len(lst) == 3:
+        assert "to" in lst
+        start, _, end = lst
+        step = 1
+    elif len(lst) == 5:
+        assert "by" in lst and "to" in lst
+        start, _, end, _, step = lst
+    return {str(i) for i in range(int(start), int(end) + 1, int(step))}
+
+
+def get_ensembles_set(obj):
+    """Counts the number of ensembles in the configuration."""
+    if isinstance(obj, dict):
+        if "number" in obj:
+            if isinstance(obj["number"], (list, tuple)):
+                return set([str(element) for element in obj["number"]])
+            if isinstance(obj["number"], (str, int)):
+                if "/" in str(obj["number"]):
+                    return mars_str_to_set(obj["number"])
+                else:
+                    return {str(obj["number"])}
+    if isinstance(obj, (dict)):
+        return flatten_list_of_sets([get_ensembles_set(v) for v in obj.values()])
+    if isinstance(obj, (list, tuple)):
+        return flatten_list_of_sets([get_ensembles_set(v) for v in obj])
+    return {}
+
+
+def count_ensembles(config: Config) -> int:
+    """Counts the number of ensembles in the configuration."""
+    ensembles = get_ensembles_set(config.input)
+    return len(ensembles) if ensembles else 1
