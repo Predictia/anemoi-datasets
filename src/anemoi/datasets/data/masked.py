@@ -326,3 +326,16 @@ class TrimEdge(Masked):
         x -= self.edge[0] + self.edge[1]
         y -= self.edge[2] + self.edge[3]
         return x, y
+
+
+class Reorder(Masked):
+
+    def tree(self) -> Node:
+        return Node(self, [self.forward.tree()], reorder_cells=self.mask)
+
+    def forwards_subclass_metadata_specific(self) -> dict[str, Any]:
+        return dict(reorder_cells=list(self.mask))
+
+    @property
+    def shape(self) -> Shape:
+        return self.forward.shape
