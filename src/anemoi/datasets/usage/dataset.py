@@ -331,6 +331,13 @@ class Dataset(ABC, Sized):
             rolling_average = kwargs.pop("rolling_average")
             return RollingAverage(self, rolling_average)._subset(**kwargs).mutate()
 
+        if "shift" in kwargs:
+            TimeShift = self.usage_factory_load("TimeShift")
+
+            shift = kwargs.pop("shift")
+            shift = np.datetime64(shift)
+            return TimeShift(self, shift)._subset(**kwargs).mutate()
+
         # Keep last
         if "shuffle" in kwargs:
             Subset = self.usage_factory_load("Subset")

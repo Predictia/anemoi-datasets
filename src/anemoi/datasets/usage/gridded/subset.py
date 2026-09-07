@@ -310,3 +310,29 @@ class Subset(Forwards):
     def project(self, projection):
         projection = projection.from_indices(axis=0, indices=self.indices)
         return self.dataset.project(projection)
+
+class TimeShift(Forwards):
+
+    def __init__(self, set: Dataset, shift: np.datetime64) -> None:
+        
+        super().__init__(set)
+
+        self.shift: np.datetime64 = shift
+        self.reason: dict[str, str] = {"time_shift_start": str(shift)}
+
+    def __repr__(self) -> str:
+
+        return f"TimeShift({self.forward},{self.dates[0]}...{self.dates[-1]}/{self.frequency})"
+
+    @cached_property
+    def dates(self) -> NDArray[np.datetime64]:
+
+        return self.forward.dates + (self.shift - self.forward.dates[0])
+
+    def tree(self) -> Node:
+
+        return Node(self, [self.forward.tree()], **self.reason)
+
+    def forwards_subclass_metadata_specific(self) -> dict[str, str]:
+        
+        return {"reason": self.reason}
