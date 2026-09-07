@@ -312,6 +312,13 @@ class Dataset(ABC, Sized):
             max_distance = kwargs.pop("max_distance", None)
             return InterpolateNearest(self, interpolate_variables, max_distance=max_distance)._subset(**kwargs).mutate()
 
+        if "shift" in kwargs:
+            from .subset import TimeShift
+
+            shift = kwargs.pop("shift")
+            shift = np.datetime64(shift)
+            return TimeShift(self, shift)._subset(**kwargs).mutate()
+
         # Keep last
         if "shuffle" in kwargs:
             from .subset import Subset
