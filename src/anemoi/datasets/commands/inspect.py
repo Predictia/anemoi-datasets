@@ -317,7 +317,8 @@ class Version:
         print()
 
         if self.statistics_ready:
-            stats = self.statistics
+            with np.errstate(divide="ignore"):
+                stats = self.statistics
         else:
             stats = [["-"] * len(self.variables)] * 7
 
