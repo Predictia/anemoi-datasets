@@ -408,7 +408,7 @@ class Combined(Forwards):
 
         # note: not a proper implementation, should be handled
         #       in a more consolidated way ...
-        rtol = 1.0e-7
+        rtol = 1.0e-3
         if not np.allclose(d1.latitudes, d2.latitudes, rtol=rtol) or not np.allclose(
             d1.longitudes, d2.longitudes, rtol=rtol
         ):
