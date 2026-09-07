@@ -263,6 +263,20 @@ class Dataset(ABC, Sized):
             bbox = kwargs.pop("area")
             return Cropping(self, bbox)._subset(**kwargs).mutate()
 
+        if "reorder_cells" in kwargs:
+            Reorder = self.usage_factory_load("Reorder")
+
+            reorder = kwargs.pop("reorder_cells")
+            reorder = np.load(reorder)
+
+            assert (
+                isinstance(reorder, np.ndarray) and
+                reorder.ndim == 1 and
+                len(reorder) == self.shape[-1]
+            ), "Invalid mask for reordering!"
+            
+            return Reorder(self, reorder)._subset(**kwargs).mutate()
+
         if "number" in kwargs or "numbers" in kwargs or "member" in kwargs or "members" in kwargs:
             Number = self.usage_factory_load("Number")
 
