@@ -71,7 +71,7 @@ class MissingDates(Forwards):
 
         if other:
             for i, date in enumerate(axis_dates):
-                if date in other:
+                if to_datetime(date) in other:
                     self._missing.add(i)
                     self.missing_dates.append(date)
 
