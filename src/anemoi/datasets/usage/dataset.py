@@ -267,7 +267,8 @@ class Dataset(ABC, Sized):
             Reorder = self.usage_factory_load("Reorder")
 
             reorder = kwargs.pop("reorder_cells")
-            reorder = np.load(reorder)
+            try: reorder = np.load(reorder)
+            except: reorder = np.load(f"{reorder}.npy")
 
             assert (
                 isinstance(reorder, np.ndarray) and
